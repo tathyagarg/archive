@@ -2,6 +2,7 @@ import argparse
 import socket
 from dataclasses import dataclass
 from enum import Enum
+from typing import Callable
 
 parser = argparse.ArgumentParser(description="Simple HTTP server")
 parser.add_argument("--port", type=int, default=8000, help="Port to run the server on")
@@ -119,6 +120,7 @@ class Server:
         *,
         routes: dict[str, str] | None = None,
         private: list[str] | None = None,
+        handlers: dict[str, dict[Method, Callable[[Request], Response]]] | None = None,
         host: str = "",
         max_backlog: int = MAX_BACKLOG,
     ):
@@ -128,6 +130,7 @@ class Server:
 
         self.routes = routes or {}
         self.private = private or ["/.git", "/.env"]
+        self.handlers = handlers or {}
 
     def run(self):
         while True:
@@ -135,7 +138,7 @@ class Server:
             request_data: str = client.recv(1024).decode()
             request = self._parse_request(request_data)
 
-            client.send(str(self.make_response_from(request.target)).encode())
+            client.send(str(self.make_response_from(request)).encode())
             client.close()
 
     def _parse_request(self, request_data: str) -> Request:
@@ -153,8 +156,8 @@ class Server:
             body="",
         )
 
-    def make_response_from(self, route: str) -> Response:
-        target = self.routes.get(route, route)
+    def make_response_from(self, request: Request) -> Response:
+        target = self.routes.get(request.target, request.target)
         for private_ep in self.private:
             if target.startswith(private_ep):
                 return Response(
@@ -165,19 +168,33 @@ class Server:
                 )
 
         file_name = target[1:]
+        if handlers := self.handlers.get(request.target):
+            for handler_method, handler_func in handlers.items():
+                if handler_method == request.method:
+                    return handler_func(request)
+
+            return Response(
+                protocol=Protocol.HTTP_1_1,
+                status=StatusCode.METHOD_NOT_ALLOWED,
+                headers={},
+                body=b"",
+            )
 
         try:
-            file_extension = file_name.split(".")[-1]
-            with open(file_name, "rb") as file:
-                body = file.read()
-                return Response(
-                    protocol=Protocol.HTTP_1_1,
-                    status=StatusCode.OK,
-                    headers={
-                        "Content-Type": MIME_TYPES.get(file_extension, "text/plain")
-                    },
-                    body=body,
-                )
+            if request.method == Method.GET:
+                file_extension = file_name.split(".")[-1]
+                with open(file_name, "rb") as file:
+                    body = file.read()
+                    return Response(
+                        protocol=Protocol.HTTP_1_1,
+                        status=StatusCode.OK,
+                        headers={
+                            "Content-Type": MIME_TYPES.get(file_extension, "text/plain")
+                        },
+                        body=body,
+                    )
+            else:
+                raise FileNotFoundError  # 404
         except FileNotFoundError:
             return Response(
                 protocol=Protocol.HTTP_1_1,
@@ -189,7 +206,18 @@ class Server:
 
 def main():
     args = parser.parse_args()
-    server = Server(args.port, routes={"/": "/index.html"}, private=["/.git"])
+    server = Server(
+        args.port,
+        routes={"/": "/index.html"},
+        private=["/.git"],
+        handlers={
+            "/awesome": {
+                Method.POST: lambda _: Response(
+                    Protocol.HTTP_1_1, StatusCode.CREATED, {}, b""
+                ),
+            }
+        },
+    )
     server.run()
 
 
