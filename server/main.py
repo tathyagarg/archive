@@ -1,4 +1,5 @@
 import argparse
+import logging
 import socket
 from dataclasses import dataclass
 from enum import Enum
@@ -6,6 +7,9 @@ from typing import Callable
 
 parser = argparse.ArgumentParser(description="Simple HTTP server")
 parser.add_argument("--port", type=int, default=8000, help="Port to run the server on")
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, filename="server.log", encoding="utf-8")
 
 MAX_BACKLOG: int = 10
 
@@ -56,6 +60,7 @@ class StatusCode:
 class Protocol(Enum):
     HTTP_1_0 = 1
     HTTP_1_1 = 2
+    HTTP_2 = 3
 
     @staticmethod
     def from_text(text: str):
@@ -63,7 +68,10 @@ class Protocol(Enum):
             return Protocol.HTTP_1_0
         if text == "HTTP/1.1":
             return Protocol.HTTP_1_1
+        if text == "HTTP/2":
+            return Protocol.HTTP_2
 
+        logging.error(f"Invalid protocol: {text}")
         raise ValueError(f"Invalid protocol: {text}")
 
     def __str__(self) -> str:
@@ -93,6 +101,7 @@ class Method(Enum):
         if text == "HEAD":
             return Method.HEAD
 
+        logging.error(f"Invalid method: {text}")
         raise ValueError(f"Invalid method: {text}")
 
 
@@ -158,7 +167,7 @@ class Server:
             request_data: str = client.recv(1024).decode()
             request = self._parse_request(request_data)
 
-            print(request.target)
+            logging.info(f"Request: {request.method} {request.target}")
             client.send(self.make_response_from(request).to_bytes())
             client.close()
 
