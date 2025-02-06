@@ -1,6 +1,10 @@
+import argparse
 import socket
 from dataclasses import dataclass
 from enum import Enum
+
+parser = argparse.ArgumentParser(description="Simple HTTP server")
+parser.add_argument("--port", type=int, default=8000, help="Port to run the server on")
 
 MAX_BACKLOG: int = 10
 
@@ -184,7 +188,8 @@ class Server:
 
 
 def main():
-    server = Server(8000, routes={"/": "/index.html"}, private=["/.git"])
+    args = parser.parse_args()
+    server = Server(args.port, routes={"/": "/index.html"}, private=["/.git"])
     server.run()
 
 
