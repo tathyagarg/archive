@@ -25,6 +25,7 @@ MIME_TYPES = {
 SITEMAP_DWMUN = {
     "/sites/dwmun" + key: "/sites/dwmun/index.html"
     for key in [
+        "",
         "/",
         "/committees",
         "/committees/unsc",
