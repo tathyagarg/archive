@@ -1,0 +1,24 @@
+:root {
+  --light-crust: #dce0e8;
+  --light-mantle #e6e9ef;
+  --light-base: #eff1f5;
+  --light-text: #4c4f69;
+
+  --dark-crust: #181926;
+  --dark-mantle: #1e2030;
+  --dark-base: #24273a;
+  --dark-text: #cad3f5;
+
+  --crust: var(--dark-crust);
+  --mantle: var(--dark-mantle);
+  --base: var(--dark-base);
+  --text: var(--dark-text);
+}
+
+body {
+  background-color: var(--base);
+  color: var(--text);
+
+  margin: 0;
+  padding: 0;
+}
