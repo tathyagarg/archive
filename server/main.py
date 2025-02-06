@@ -71,7 +71,7 @@ class Protocol(Enum):
         if text == "HTTP/2":
             return Protocol.HTTP_2
 
-        logging.error(f"Invalid protocol: {text}")
+        logger.error(f"Invalid protocol: {text}")
         raise ValueError(f"Invalid protocol: {text}")
 
     def __str__(self) -> str:
@@ -102,7 +102,7 @@ class Method(Enum):
         if text == "HEAD":
             return Method.HEAD
 
-        logging.error(f"Invalid method: {text}")
+        logger.error(f"Invalid method: {text}")
         raise ValueError(f"Invalid method: {text}")
 
 
@@ -168,7 +168,7 @@ class Server:
             request_data: str = client.recv(1024).decode()
             request = self._parse_request(request_data)
 
-            logging.info(f"Request: {request.method} {request.target}")
+            logger.info(f"Request: {request.method} {request.target}")
             client.send(self.make_response_from(request).to_bytes())
             client.close()
 
@@ -189,10 +189,10 @@ class Server:
 
     def make_response_from(self, request: Request) -> Response:
         target = self.routes.get(request.target, request.target)
-        logging.debug(f"Resolved target: {target}")
+        logger.debug(f"Resolved target: {target}")
         for private_ep in self.private:
             if target.startswith(private_ep):
-                logging.warning(f"Attempt to access private endpoint: {target}")
+                logger.warning(f"Attempt to access private endpoint: {target}")
                 return Response(
                     protocol=Protocol.HTTP_1_1,
                     status=StatusCode.FORBIDDEN,
@@ -204,7 +204,7 @@ class Server:
         if handlers := self.handlers.get(request.target):
             for handler_method, handler_func in handlers.items():
                 if handler_method == request.method:
-                    logging.debug(
+                    logger.debug(
                         f"Handling {request.method} request with custom handler"
                     )
                     return handler_func(request)
@@ -220,7 +220,7 @@ class Server:
             if request.method == Method.GET:
                 file_extension = file_name.split(".")[-1]
                 with open(file_name, "rb") as file:
-                    logging.debug(f"Reading file: {file_name}")
+                    logger.debug(f"Reading file: {file_name}")
                     body = file.read()
                     return Response(
                         protocol=Protocol.HTTP_1_1,
@@ -233,7 +233,7 @@ class Server:
             else:
                 raise FileNotFoundError  # 404
         except FileNotFoundError:
-            logging.warning(f"File not found: {file_name}")
+            logger.warning(f"File not found: {file_name}")
             return Response(
                 protocol=Protocol.HTTP_1_1,
                 status=StatusCode.NOT_FOUND,
