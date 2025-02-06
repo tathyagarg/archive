@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser(description="Simple HTTP server")
 parser.add_argument("--port", type=int, default=8000, help="Port to run the server on")
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, filename="server.log", encoding="utf-8")
+logging.basicConfig(level=logging.DEBUG, filename="server.log", encoding="utf-8")
 
 MAX_BACKLOG: int = 10
 
