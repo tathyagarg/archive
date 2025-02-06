@@ -14,6 +14,26 @@ MIME_TYPES = {
     "css": "text/css",
     "js": "text/javascript",
     "json": "application/json",
+    "png": "image/png",
+    "webp": "image/webp",
+}
+
+SITEMAP_DWMUN = {
+    "/sites/dwmun" + key: "/sites/dwmun/index.html"
+    for key in [
+        "/",
+        "/committees",
+        "/committees/unsc",
+        "/committees/unhrc",
+        "/committees/disec",
+        "/committees/lok-sabha",
+        "/committees/ipc",
+        "/committees/committee-x",
+        "/committees/ccc",
+        "/secretariat",
+        "/registration",
+        "/resources",
+    ]
 }
 
 
@@ -102,13 +122,13 @@ class Response:
     headers: dict[str, str]
     body: bytes
 
-    def __str__(self) -> str:
-        return "\r\n".join(
+    def to_bytes(self) -> bytes:
+        return b"\r\n".join(
             [
-                f"{self.protocol} {self.status}",
-                *([": ".join(header) for header in self.headers.items()]),
-                "",
-                self.body.decode(),
+                f"{self.protocol} {self.status}".encode(),
+                *([": ".join(header).encode() for header in self.headers.items()]),
+                b"",
+                self.body,
             ]
         )
 
@@ -138,7 +158,8 @@ class Server:
             request_data: str = client.recv(1024).decode()
             request = self._parse_request(request_data)
 
-            client.send(str(self.make_response_from(request)).encode())
+            print(request.target)
+            client.send(self.make_response_from(request).to_bytes())
             client.close()
 
     def _parse_request(self, request_data: str) -> Request:
@@ -208,7 +229,7 @@ def main():
     args = parser.parse_args()
     server = Server(
         args.port,
-        routes={"/": "/index.html"},
+        routes={"/": "/index.html", **SITEMAP_DWMUN},
         private=["/.git"],
         handlers={
             "/awesome": {
