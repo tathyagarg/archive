@@ -1,0 +1,60 @@
+@property --theme-switch-width {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 60px;
+}
+
+@property --theme-switch-height {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 34px;
+}
+
+@property --theme-switch-tab-size {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 26px;
+}
+
+#theme-switch {
+  position: relative;
+  display: inline-block;
+  width: var(--theme-switch-width); 
+  height: var(--theme-switch-height);
+}
+
+#theme-switch input {
+  display: none;
+}
+
+#theme-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--surface0);
+  -webkit-transition: 400ms;
+  transition: 400ms;
+  border-radius: var(--theme-switch-height);
+}
+
+#theme-slider:before {
+  position: absolute;
+  content: "";
+  height: var(--theme-switch-tab-size);
+  width: var(--theme-switch-tab-size);
+  left: calc((var(--theme-switch-height) - var(--theme-switch-tab-size)) / 2);
+  bottom: calc((var(--theme-switch-height) - var(--theme-switch-tab-size)) / 2);
+  background-color: var(--text);
+  -webkit-transition: 400ms;
+  transition: 400ms;
+  border-radius: 50%;
+}
+
+#theme-switch input:checked + #theme-slider:before {
+  -webkit-transform: translateX(var(--theme-switch-tab-size));
+  -ms-transform: translateX(var(--theme-switch-tab-size));
+  transform: translateX(var(--theme-switch-tab-size));
+}

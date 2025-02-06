@@ -95,7 +95,7 @@ class Response:
     protocol: Protocol
     status: str
     headers: dict[str, str]
-    body: str
+    body: bytes
 
     def __str__(self) -> str:
         return "\r\n".join(
@@ -103,7 +103,7 @@ class Response:
                 f"{self.protocol} {self.status}",
                 *([": ".join(header) for header in self.headers.items()]),
                 "",
-                self.body,
+                self.body.decode(),
             ]
         )
 
@@ -114,6 +114,7 @@ class Server:
         port: int,
         *,
         routes: dict[str, str] | None = None,
+        private: list[str] | None = None,
         host: str = "",
         max_backlog: int = MAX_BACKLOG,
     ):
@@ -122,6 +123,7 @@ class Server:
         self.server.listen(max_backlog)
 
         self.routes = routes or {}
+        self.private = private or ["/.git", "/.env"]
 
     def run(self):
         while True:
@@ -149,10 +151,20 @@ class Server:
 
     def make_response_from(self, route: str) -> Response:
         target = self.routes.get(route, route)
+        for private_ep in self.private:
+            if target.startswith(private_ep):
+                return Response(
+                    protocol=Protocol.HTTP_1_1,
+                    status=StatusCode.FORBIDDEN,
+                    headers={},
+                    body=b"",
+                )
+
         file_name = target[1:]
+
         try:
             file_extension = file_name.split(".")[-1]
-            with open(file_name, "r") as file:
+            with open(file_name, "rb") as file:
                 body = file.read()
                 return Response(
                     protocol=Protocol.HTTP_1_1,
@@ -167,12 +179,12 @@ class Server:
                 protocol=Protocol.HTTP_1_1,
                 status=StatusCode.NOT_FOUND,
                 headers={},
-                body="",
+                body=b"",
             )
 
 
 def main():
-    server = Server(8000, routes={"/": "/index.html"})
+    server = Server(8000, routes={"/": "/index.html"}, private=["/.git"])
     server.run()
 
 

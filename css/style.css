@@ -1,17 +1,26 @@
 :root {
   --light-crust: #dce0e8;
-  --light-mantle #e6e9ef;
+  --light-mantle: #e6e9ef;
   --light-base: #eff1f5;
+  --light-surface0: #ccd0da;
+  --light-surface1: #bcc0cc;
+  --light-surface2: #acb0be;
   --light-text: #4c4f69;
 
   --dark-crust: #181926;
   --dark-mantle: #1e2030;
   --dark-base: #24273a;
+  --dark-surface0: #363a4f;
+  --dark-surface1: #494d64;
+  --dark-surface2: #5b6078;
   --dark-text: #cad3f5;
 
   --crust: var(--dark-crust);
   --mantle: var(--dark-mantle);
   --base: var(--dark-base);
+  --surface0: var(--dark-surface0);
+  --surface1: var(--dark-surface1);
+  --surface2: var(--dark-surface2);
   --text: var(--dark-text);
 }
 
