@@ -189,8 +189,10 @@ class Server:
 
     def make_response_from(self, request: Request) -> Response:
         target = self.routes.get(request.target, request.target)
+        logging.debug(f"Resolved target: {target}")
         for private_ep in self.private:
             if target.startswith(private_ep):
+                logging.warning(f"Attempt to access private endpoint: {target}")
                 return Response(
                     protocol=Protocol.HTTP_1_1,
                     status=StatusCode.FORBIDDEN,
@@ -202,6 +204,9 @@ class Server:
         if handlers := self.handlers.get(request.target):
             for handler_method, handler_func in handlers.items():
                 if handler_method == request.method:
+                    logging.debug(
+                        f"Handling {request.method} request with custom handler"
+                    )
                     return handler_func(request)
 
             return Response(
@@ -215,6 +220,7 @@ class Server:
             if request.method == Method.GET:
                 file_extension = file_name.split(".")[-1]
                 with open(file_name, "rb") as file:
+                    logging.debug(f"Reading file: {file_name}")
                     body = file.read()
                     return Response(
                         protocol=Protocol.HTTP_1_1,
@@ -227,6 +233,7 @@ class Server:
             else:
                 raise FileNotFoundError  # 404
         except FileNotFoundError:
+            logging.warning(f"File not found: {file_name}")
             return Response(
                 protocol=Protocol.HTTP_1_1,
                 status=StatusCode.NOT_FOUND,
