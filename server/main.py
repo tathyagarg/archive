@@ -20,6 +20,7 @@ MIME_TYPES = {
     "json": "application/json",
     "png": "image/png",
     "webp": "image/webp",
+    "jpeg": "image/jpeg",
 }
 
 SITEMAP_DWMUN = {
@@ -38,6 +39,40 @@ SITEMAP_DWMUN = {
         "/secretariat",
         "/registration",
         "/resources",
+    ]
+}
+
+SITEMAP_TECHFUSION = {
+    "/sites/techfusion" + key: "/sites/techfusion/index.html"
+    for key in [
+        "",
+        "/",
+        "/events",
+        "/events/techknowquiz",
+        "/events/techknowquiz/guidelines",
+        "/events/techknowquiz/about",
+        "/events/hack-a-thon",
+        "/events/hack-a-thon/guidelines",
+        "/events/hack-a-thon/about",
+        "/events/web-palette",
+        "/events/web-palette/guidelines",
+        "/events/web-palette/about",
+        "/events/decryption-duel",
+        "/events/decryption-duel/guidelines",
+        "/events/decryption-duel/about",
+        "/events/game-fiesta",
+        "/events/game-fiesta/guidelines",
+        "/events/game-fiesta/about",
+        "/resources",
+        "/resources/oc",
+        "/guidelines",
+        "/register",
+        "/register/techknowquiz",
+        "/register/hack-a-thon",
+        "/register/web-palette",
+        "/register/decryption-duel",
+        "/register/game-fiesta/valorant",
+        "/register/game-fiesta/fortnite",
     ]
 }
 
@@ -169,7 +204,7 @@ class Server:
             request_data: str = client.recv(1024).decode()
             request = self._parse_request(request_data)
 
-            logger.info(f"Request: {request.method} {request.target}")
+            logger.info(f"Request: {request}")
             client.send(self.make_response_from(request).to_bytes())
             client.close()
 
@@ -179,14 +214,26 @@ class Server:
 
         method = Method.from_text(method_str)
         protocol = Protocol.from_text(protocol_str)
+        headers, body_start = self._parse_headers(lines[1:])
 
         return Request(
             protocol=protocol,
             target=target,
             method=method,
-            headers={},
-            body="",
+            headers=headers,
+            body="\r\n".join(lines[body_start + 1 :]),
         )
+
+    def _parse_headers(self, header_lines: list[str]) -> tuple[dict[str, str], int]:
+        headers: dict[str, str] = {}
+        i: int = 0
+        for i, line in enumerate(header_lines):
+            if not line:  # we've reached the body of the request
+                break
+            key, value = line.split(": ")
+            headers[key] = value
+
+        return headers, i
 
     def make_response_from(self, request: Request) -> Response:
         target = self.routes.get(request.target, request.target)
@@ -247,7 +294,7 @@ def main():
     args = parser.parse_args()
     server = Server(
         args.port,
-        routes={"/": "/index.html", **SITEMAP_DWMUN},
+        routes={"/": "/index.html", **SITEMAP_DWMUN, **SITEMAP_TECHFUSION},
         private=["/.git"],
         handlers={
             "/awesome": {

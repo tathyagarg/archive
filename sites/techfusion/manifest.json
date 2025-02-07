@@ -1,0 +1,15 @@
+{
+  "short_name": "Techfusion'24",
+  "name": "Techfusion'24",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "type": "image/png",
+      "sizes": "500x500"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
