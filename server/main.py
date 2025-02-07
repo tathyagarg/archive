@@ -1,5 +1,7 @@
 import argparse
+import json
 import logging
+import os
 import socket
 from dataclasses import dataclass
 from enum import Enum
@@ -21,6 +23,7 @@ MIME_TYPES = {
     "png": "image/png",
     "webp": "image/webp",
     "jpeg": "image/jpeg",
+    "ico": "image/x-icon",
 }
 
 SITEMAP_DWMUN = {
@@ -196,7 +199,10 @@ class Server:
 
         self.routes = routes or {}
         self.private = private or ["/.git", "/.env"]
-        self.handlers = handlers or {}
+
+        self.handlers = {}
+        if handlers:
+            self.handlers = {"/api" + k: v for k, v in handlers.items()}
 
     def run(self):
         while True:
@@ -215,6 +221,9 @@ class Server:
         method = Method.from_text(method_str)
         protocol = Protocol.from_text(protocol_str)
         headers, body_start = self._parse_headers(lines[1:])
+
+        if target.endswith("/"):
+            target += "index.html"
 
         return Request(
             protocol=protocol,
@@ -290,18 +299,49 @@ class Server:
             )
 
 
+def sites_handler(_: Request) -> Response:
+    sites_list = os.listdir("sites")
+    sites = []
+
+    for site in sites_list:
+        if os.path.isdir(f"sites/{site}"):
+            try:
+                with open(f"sites/{site}/README.md", "r") as file:
+                    data = file.readlines()
+                    metadata = {}
+                    start = False
+                    for line in data:
+                        if line == "---\n":
+                            start = not start
+                            continue
+                        if start:
+                            key, value = line.split(": ")
+                            metadata[key] = value.strip()
+
+                    sites.append({"name": site, "data": metadata})
+            except FileNotFoundError:
+                logger.warning(f"No README.md found for site: {site}")
+                sites.append({"name": site, "data": {}})
+
+    return Response(
+        protocol=Protocol.HTTP_1_1,
+        status=StatusCode.OK,
+        headers={"Content-Type": "application/json"},
+        body=json.dumps({"sites": sites}).encode(),
+    )
+
+
 def main():
     args = parser.parse_args()
     server = Server(
         args.port,
-        routes={"/": "/index.html", **SITEMAP_DWMUN, **SITEMAP_TECHFUSION},
+        routes={
+            **SITEMAP_DWMUN,
+            **SITEMAP_TECHFUSION,
+        },
         private=["/.git"],
         handlers={
-            "/awesome": {
-                Method.POST: lambda _: Response(
-                    Protocol.HTTP_1_1, StatusCode.CREATED, {}, b""
-                ),
-            }
+            "/sites": {Method.GET: sites_handler},
         },
     )
     server.run()

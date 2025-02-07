@@ -1,0 +1,30 @@
+#site-list {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+
+  width: 100%;
+}
+
+
+.site {
+  width: 33%;
+
+  padding: 1%;
+  box-sizing: border-box;
+
+  background-color: var(--surface1);
+  border-radius: 10px;
+  border: 2px solid var(--surface2);
+  color: var(--text1);
+  text-decoration: none;
+}
+
+.site-icon {
+  max-width: 100%;
+}
+
+.site-name,
+.site-description {
+  text-align: center;
+}

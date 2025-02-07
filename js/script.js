@@ -17,7 +17,7 @@ if (theme == null) {
 updateTheme(localStorage.getItem("theme"));
 
 getNavbar = new Promise((resolve, reject) => {
-  fetch("navbar.html")
+  fetch("/navbar.html")
     .then((response) => {
       return response.text();
     })

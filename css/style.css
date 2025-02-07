@@ -30,8 +30,32 @@ body {
 
   margin: 0;
   padding: 0;
+
+  font-family: 'Roboto', sans-serif;
+}
+
+h1:not(.has-margin) {
+  margin: 0;
 }
 
 #navbar {
   background-color: var(--mantle);
+}
+
+#document {
+  min-height: 50vh;
+
+  width: 60%;
+  margin: 1% auto;
+
+  background-color: var(--surface0);
+  border: 2px solid var(--surface1);
+  border-radius: 10px;
+
+  padding: 1%;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
